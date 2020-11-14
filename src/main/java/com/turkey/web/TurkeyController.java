@@ -1,61 +1,59 @@
 package com.turkey.web;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import com.turkey.business.Turkey;
+import com.turkey.db.TurkeyRepo;
 
+@CrossOrigin
 @RestController
-@RequestMapping("/turkey")
+@RequestMapping("/turkeys")
 public class TurkeyController {
+
+	@Autowired
+	private TurkeyRepo turkeyRepo;
 	
-	private List<Turkey> turkeys = new ArrayList<>();	
-	
-	// get all (select * - no filter)
+	// Get all turkeys
 	@GetMapping("/")
-	public List<Turkey> getTurkeys() {
-		return turkeys;
+	public List<Turkey> getAll() {
+		return turkeyRepo.findAll();
 	}
 	
-	// get a single turkey by id (select * by id)
+	// Get a turkey by id
 	@GetMapping("/{id}")
-	public Turkey getTurkeyById(@PathVariable int id) {
-		Turkey t = null;
-		for(Turkey turkey: turkeys) {
-			if(turkey.getId() == id) {
-				t = turkey;
-			}
-		}
+	public Optional<Turkey> getById(@PathVariable int id) {
+		return turkeyRepo.findById(id);
+	}
+	
+	// Add a turkey
+	@PostMapping("/")
+	public Turkey addTurkey(@RequestBody Turkey t) {
+		t = turkeyRepo.save(t);
 		return t;
 	}
 	
-	// delete a turkey by id (delete where id = ?)
-	@DeleteMapping("/{id}")
+	// Update a turkey
+	@PutMapping("/")
+	public Turkey updateTurkey(@RequestBody Turkey t) {
+		t = turkeyRepo.save(t);
+		return t;
+	}
+	
+	// Delete a turkey by id
+	@DeleteMapping("{id}")
 	public Turkey deleteTurkey(@PathVariable int id) {
-		Turkey t = null;
-		for(Turkey turkey: turkeys) {
-			if(turkey.getId() == id) {
-				t = turkey;
-				turkeys.remove(turkey);
-			}
+		Optional<Turkey> t = turkeyRepo.findById(id);
+
+		if (t.isPresent()) {
+			turkeyRepo.deleteById(id);
+		} else {
+			System.out.println("Error - turkey not found for id " + id);
 		}
-		return t;
-	}
-	
-	// When we accept request parameters we don't need a leading '/'
-	@PostMapping("")
-	public Turkey createTurkey(@RequestParam int id, @RequestParam String name, @RequestParam double weight) {
-		Turkey t = new Turkey(id, name, weight);
-		turkeys.add(t);
-		return t;
+		return t.get();
 	}
 	
 }
